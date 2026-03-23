@@ -3,53 +3,259 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-	<title>Моя игра</title>
+	<title>Разлей-ка цвет</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="styles.css">
 	<script src="https://yandex.ru/games/sdk/v2"></script>
-	<script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/Draggable.min.js"></script>
 </head>
 <body oncontextmenu="return false">
 	<div class="g-app" id="app">
 
-		<!-- Главное меню -->
+		<!-- ===== ГЛАВНОЕ МЕНЮ ===== -->
 		<div class="screen is-active" id="screen-menu">
+			<!-- Декоративные blob-фигуры -->
+			<div class="menu-blob menu-blob--1"></div>
+			<div class="menu-blob menu-blob--2"></div>
+			<div class="menu-blob menu-blob--3"></div>
+			<div class="menu-blob menu-blob--4"></div>
+
 			<div class="menu">
-				<h1 class="menu__title" data-i18n="game.title">Моя игра</h1>
-				<p class="menu__subtitle" data-i18n="game.description">Описание игры</p>
-				<button class="btn btn--primary" id="btn-play" data-i18n="btn.play">Играть</button>
+				<!-- Логотип -->
+				<div class="menu__logo">
+					<div class="menu__logo-icon">🧪</div>
+					<h1 class="menu__title" data-i18n="game.title">Разлей-ка цвет</h1>
+				</div>
+
+				<!-- Статы в чипах -->
+				<div class="menu__chips">
+					<div class="menu__chip">
+						<span class="menu__chip-icon" data-i18n="level.label">Уровень</span>
+						<span class="menu__chip-value" id="menu-level-num">1</span>
+					</div>
+					<div class="menu__chip menu__chip--stars">
+						<span class="menu__chip-icon">⭐</span>
+						<span class="menu__chip-value" id="menu-total-stars">0</span>
+					</div>
+					<div class="menu__chip menu__chip--coins">
+						<span class="menu__chip-icon">🪙</span>
+						<span class="menu__chip-value" id="menu-coins">0</span>
+					</div>
+				</div>
+
+				<!-- Прогресс-бар -->
+				<div class="menu__progress-bar">
+					<div class="menu__progress-fill" id="menu-progress-fill"></div>
+				</div>
+
+				<!-- Главная кнопка -->
+				<button class="btn-play-big" id="btn-play">
+					<span class="btn-play-big__ring"></span>
+					<span class="btn-play-big__text" data-i18n="btn.play">Играть</span>
+				</button>
+
+				<!-- Карточки режимов — 3 в ряд -->
+				<div class="menu__modes">
+					<button class="mode-card mode-card--accent" id="btn-endless">
+						<span class="mode-card__icon">♾️</span>
+						<span class="mode-card__label" data-i18n="btn.endless">Бесконечный</span>
+					</button>
+					<button class="mode-card mode-card--pink" id="btn-daily">
+						<span class="mode-card__icon">📅</span>
+						<span class="mode-card__label" data-i18n="btn.daily">Испытание дня</span>
+					</button>
+					<button class="mode-card mode-card--teal" id="btn-timed">
+						<span class="mode-card__icon">⏱️</span>
+						<span class="mode-card__label" data-i18n="btn.timed">На время</span>
+					</button>
+				</div>
+
+				<!-- Нижняя навигация -->
+				<div class="menu__nav">
+					<button class="menu__nav-btn" id="btn-levels">
+						<span class="menu__nav-icon">📋</span>
+						<span class="menu__nav-label" data-i18n="btn.levels">Уровни</span>
+					</button>
+					<button class="menu__nav-btn" id="btn-shop">
+						<span class="menu__nav-icon">🛒</span>
+						<span class="menu__nav-label" data-i18n="btn.shop">Магазин</span>
+					</button>
+					<button class="menu__nav-btn" id="btn-achievements">
+						<span class="menu__nav-icon">🏆</span>
+						<span class="menu__nav-label" data-i18n="achieve.title">Медали</span>
+					</button>
+					<button class="menu__nav-btn" id="btn-how-to-play">
+						<span class="menu__nav-icon">❓</span>
+						<span class="menu__nav-label" data-i18n="btn.how-to-play">Правила</span>
+					</button>
+				</div>
+			</div>
+
+			<!-- Смена языка -->
+			<button class="btn-corner btn-corner--br" id="btn-lang" aria-label="Язык">RU</button>
+			<!-- Звук в углу -->
+			<button class="btn-corner btn-corner--bl" id="btn-sound-menu" aria-label="Звук">&#128266;</button>
+		</div>
+
+		<!-- ===== МАГАЗИН ===== -->
+		<div class="screen screen--overlay" id="screen-shop">
+			<div class="modal modal--tall">
+				<h2 class="modal__title" data-i18n="shop.title">Магазин</h2>
+				<div class="shop__coins-row">🪙 <span id="shop-coins">0</span></div>
+				<div class="shop__tabs">
+					<button class="shop__tab is-active" data-cat="themes" data-i18n="shop.cat.themes">Темы</button>
+					<button class="shop__tab" data-cat="boosts" data-i18n="shop.cat.boosts">Бустеры</button>
+				</div>
+				<div class="shop__grid" id="shop-grid"></div>
+				<button class="btn btn--secondary" id="btn-shop-close" data-i18n="btn.close">Закрыть</button>
 			</div>
 		</div>
 
-		<!-- Игровой экран -->
+		<!-- ===== КАК ИГРАТЬ ===== -->
+		<div class="screen screen--overlay" id="screen-how">
+			<div class="modal">
+				<h2 class="modal__title" data-i18n="how.title">Как играть</h2>
+				<div class="how__steps">
+					<div class="how__step"><span class="how__num">1</span><span data-i18n="how.step1">Нажми на пробирку, чтобы выбрать её</span></div>
+					<div class="how__step"><span class="how__num">2</span><span data-i18n="how.step2">Нажми на другую пробирку, чтобы перелить цвет</span></div>
+					<div class="how__step"><span class="how__num">3</span><span data-i18n="how.step3">Переливать можно только одинаковый цвет сверху</span></div>
+					<div class="how__step"><span class="how__num">4</span><span data-i18n="how.step4">Заполни каждую пробирку одним цветом, чтобы пройти уровень</span></div>
+				</div>
+				<p class="how__tip" data-i18n="how.tip">Используй подсказки и бомбы, если застрял!</p>
+				<button class="btn btn--primary" id="btn-how-close" data-i18n="btn.close">Закрыть</button>
+			</div>
+		</div>
+
+		<!-- ===== ВЫБОР УРОВНЯ ===== -->
+		<div class="screen screen--overlay" id="screen-levels">
+			<div class="modal modal--tall">
+				<h2 class="modal__title" data-i18n="levels.title">Уровни</h2>
+				<div class="levels__grid" id="levels-grid"></div>
+				<button class="btn btn--secondary" id="btn-levels-close" data-i18n="btn.close">Закрыть</button>
+			</div>
+		</div>
+
+		<!-- ===== ДОСТИЖЕНИЯ ===== -->
+		<div class="screen screen--overlay" id="screen-achievements">
+			<div class="modal modal--tall">
+				<h2 class="modal__title" data-i18n="achieve.title">Достижения</h2>
+				<div class="achieve__grid" id="achieve-grid"></div>
+				<button class="btn btn--secondary" id="btn-achieve-close" data-i18n="btn.close">Закрыть</button>
+			</div>
+		</div>
+
+		<!-- ===== ПОПАП «ВРЕМЯ ВЫШЛО» ===== -->
+		<div class="toast" id="toast-timed">
+			<div class="toast__icon">⏱️</div>
+			<div class="toast__body">
+				<div class="toast__title" data-i18n="timed.expired">Время вышло!</div>
+				<div class="toast__desc" data-i18n="timed.expired-desc">Доигрывай без бонуса</div>
+			</div>
+		</div>
+
+		<!-- ===== ПОПАП «ДОСТИЖЕНИЕ» ===== -->
+		<div class="toast" id="toast-achievement">
+			<div class="toast__icon" id="toast-achieve-icon">🏆</div>
+			<div class="toast__body">
+				<div class="toast__title" id="toast-achieve-title"></div>
+				<div class="toast__desc" id="toast-achieve-desc"></div>
+			</div>
+		</div>
+
+		<!-- ===== ПОПАП «ИСПЫТАНИЕ ДНЯ ПРОЙДЕНО» ===== -->
+		<div class="toast" id="toast-daily">
+			<div class="toast__icon">📅</div>
+			<div class="toast__body">
+				<div class="toast__title" data-i18n="daily.completed">Уже пройдено сегодня!</div>
+				<div class="toast__desc" data-i18n="daily.completed-desc">Возвращайся завтра за новым испытанием!</div>
+			</div>
+		</div>
+
+		<!-- ===== ИГРОВОЙ ЭКРАН ===== -->
 		<div class="screen" id="screen-game">
-			<div class="game__header">
-				<div class="score">
-					<span class="score__label" data-i18n="score.label">Очки</span>
-					<span class="score__value" id="score">0</span>
+			<!-- Тонкий top-bar -->
+			<div class="topbar">
+				<button class="topbar__btn" id="btn-pause" aria-label="Пауза">
+					<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="4" y="3" width="4" height="14" rx="1" fill="currentColor"/><rect x="12" y="3" width="4" height="14" rx="1" fill="currentColor"/></svg>
+				</button>
+				<div class="topbar__center">
+					<span class="topbar__level" data-i18n="level.label">Уровень</span>
+					<span class="topbar__level-num" id="level-value">1</span>
 				</div>
-				<div class="game__controls">
-					<button class="btn btn--icon" id="btn-sound" aria-label="Звук" data-i18n="btn.sound" data-i18n-attr="aria-label">&#128266;</button>
-					<button class="btn btn--icon" id="btn-pause" aria-label="Пауза" data-i18n="btn.pause" data-i18n-attr="aria-label">&#9208;</button>
+				<div class="topbar__timer" id="topbar-timer" style="display:none">
+					<span class="topbar__timer-icon">⏱️</span>
+					<span class="topbar__timer-value" id="timer-value">90</span>
+				</div>
+				<div class="topbar__right">
+					<span class="topbar__moves" id="moves-value">0</span>
+					<span class="topbar__moves-label" data-i18n="moves.label">ходов</span>
 				</div>
 			</div>
-			<canvas class="game__canvas" id="game-canvas" width="360" height="360"></canvas>
+
+			<!-- Canvas без рамки -->
+			<canvas class="game__canvas" id="game-canvas"></canvas>
+
+			<!-- Док-бар с круглыми кнопками -->
+			<div class="dock">
+				<button class="dock__btn" id="btn-undo" aria-label="Отменить">
+					<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M7 11H3l4-4M3 11l4 4M3 11h12a4 4 0 110 8H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+					<span class="dock__badge" id="undo-badge">3</span>
+				</button>
+				<button class="dock__btn dock__btn--ad" id="btn-hint" aria-label="Подсказка">
+					<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 1a7 7 0 00-3 13.33V17a1 1 0 001 1h4a1 1 0 001-1v-2.67A7 7 0 0011 1z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="9" y1="21" x2="13" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+				</button>
+				<button class="dock__btn dock__btn--ad" id="btn-extra-tube" aria-label="Доп. пробирка">
+					<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="7" y="2" width="8" height="18" rx="4" stroke="currentColor" stroke-width="2"/><line x1="11" y1="6" x2="11" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="8" x2="13" y2="8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+				</button>
+				<button class="dock__btn dock__btn--ad" id="btn-bomb" aria-label="Бомба">
+					<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="10" cy="13" r="7" stroke="currentColor" stroke-width="2"/><path d="M13 6l2-3M14 3l2 1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+				</button>
+				<button class="dock__btn dock__btn--ad" id="btn-magnet" aria-label="Магнит">
+					<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M5 3v8a6 6 0 0012 0V3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="3" y="2" width="4" height="5" rx="1" fill="currentColor"/><rect x="15" y="2" width="4" height="5" rx="1" fill="currentColor"/></svg>
+				</button>
+				<button class="dock__btn" id="btn-freeze" aria-label="Заморозка">
+					<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><line x1="11" y1="2" x2="11" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="2" y1="11" x2="20" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="4.5" y1="4.5" x2="17.5" y2="17.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="17.5" y1="4.5" x2="4.5" y2="17.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+				</button>
+				<button class="dock__btn" id="btn-sound" aria-label="Звук">
+					<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 3L6 8H2v6h4l5 5V3z" fill="currentColor"/><path d="M15.5 8.5a4 4 0 010 5M18 6a8 8 0 010 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+				</button>
+			</div>
 		</div>
 
-		<!-- Экран паузы -->
+		<!-- ===== ПАУЗА ===== -->
 		<div class="screen screen--overlay" id="screen-pause">
 			<div class="modal">
 				<h2 class="modal__title" data-i18n="btn.pause">Пауза</h2>
 				<button class="btn btn--primary" id="btn-resume" data-i18n="btn.resume">Продолжить</button>
+				<button class="btn btn--secondary" id="btn-restart-level" data-i18n="btn.restart-level">Начать заново</button>
 				<button class="btn btn--secondary" id="btn-pause-menu" data-i18n="btn.menu">Меню</button>
 			</div>
 		</div>
 
-		<!-- Game Over -->
-		<div class="screen" id="screen-gameover">
+		<!-- ===== УРОВЕНЬ ПРОЙДЕН ===== -->
+		<div class="screen screen--overlay" id="screen-level-complete">
+			<div class="confetti" id="confetti-container"></div>
+			<div class="modal modal--complete">
+				<h2 class="modal__title modal__title--complete" data-i18n="level.complete">Уровень пройден!</h2>
+				<div class="stars" id="complete-stars"></div>
+				<div class="modal__stats">
+					<div class="modal__stat-item">
+						<span class="modal__stat-label" data-i18n="moves.label">Ходы</span>
+						<span class="modal__stat-value" id="complete-moves">0</span>
+					</div>
+					<div class="modal__stat-item">
+						<span class="modal__stat-label" data-i18n="combo.label">Комбо</span>
+						<span class="modal__stat-value" id="complete-combo">0</span>
+					</div>
+				</div>
+				<button class="btn btn--primary btn--glow" id="btn-next-level" data-i18n="btn.next-level">Следующий уровень</button>
+				<button class="btn btn--secondary" id="btn-complete-menu" data-i18n="btn.menu">Меню</button>
+			</div>
+		</div>
+
+		<!-- ===== GAME OVER ===== -->
+		<div class="screen screen--overlay" id="screen-gameover">
 			<div class="modal">
 				<h2 class="modal__title" data-i18n="game-over.title">Игра окончена</h2>
 				<p class="modal__score"><span data-i18n="score.result">Очки:</span> <span class="modal__score-value" id="final-score">0</span></p>
@@ -60,7 +266,6 @@
 
 	</div>
 
-	<!-- Скрипты в порядке зависимостей -->
 	<script src="src/config.js"></script>
 	<script src="src/i18n.js"></script>
 	<script src="src/game.js"></script>
