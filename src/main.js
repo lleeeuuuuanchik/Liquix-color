@@ -524,17 +524,36 @@
 		YandexSDK.gameplayStop();
 		levelsCompleted++;
 
-		var stars = Game.isEndlessMode ? 0 : Game.getStars();
+		var special = isSpecialMode();
+		var stars = special ? 0 : Game.getStars();
 
-		if (!Game.isEndlessMode && !Game.isDailyMode)
+		if (!special)
 			Progress.setStars(Game.level, stars);
 
 		var movesEl = document.getElementById('complete-moves');
 		var comboEl = document.getElementById('complete-combo');
+		var starsEl = document.getElementById('complete-stars');
+		var titleEl = document.querySelector('#screen-level-complete .modal__title');
+
 		if (movesEl) movesEl.textContent = Game.moveCount;
 		if (comboEl) comboEl.textContent = Game.comboScore > 0 ? '+' + Game.comboScore : '0';
 
-		renderStars(stars);
+		// Звёзды — только для обычного режима
+		if (starsEl) starsEl.style.display = special ? 'none' : '';
+		if (!special) renderStars(stars);
+
+		// Заголовок зависит от режима
+		if (titleEl)
+		{
+			if (Game.isEndlessMode)
+				titleEl.textContent = i18n.t('endless.win');
+			else if (Game.isDailyMode)
+				titleEl.textContent = i18n.t('daily.win');
+			else if (Game.isTimedMode)
+				titleEl.textContent = i18n.t('timed.win');
+			else
+				titleEl.textContent = i18n.t('level.complete');
+		}
 
 		if (stars === 3)
 			Progress.incStat('threeStarWins');
@@ -542,16 +561,32 @@
 		if (Game.comboCount >= 5)
 			Progress.incStat('combo5');
 
+		// Начисляем награды в зависимости от режима
 		if (Game.isDailyMode)
 		{
 			Progress.completeDaily();
 			Progress.addCoins(CONFIG.DAILY_BONUS_COINS);
 			Progress.incStat('dailyWins');
 		}
+		else if (Game.isEndlessMode)
+		{
+			Progress.addCoins(CONFIG.COINS_PER_LEVEL);
+			Progress.incStat('levelsWon');
+			Progress.updateEndlessHigh(Game.endlessLevel);
+		}
+
+		if (Game.isTimedMode)
+		{
+			var bonus = Game.getTimedBonus();
+			if (bonus > 0)
+				Progress.addCoins(bonus);
+			Progress.incStat('timedWins');
+			Game._stopTimer();
+		}
 
 		// В спецрежимах скрываем «Следующий уровень», оставляем только «Меню»
 		var btnNext = document.getElementById('btn-next-level');
-		if (btnNext) btnNext.style.display = isSpecialMode() ? 'none' : '';
+		if (btnNext) btnNext.style.display = special ? 'none' : '';
 
 		if (levelsCompleted % CONFIG.INTERSTITIAL_EVERY === 0)
 		{

@@ -98,10 +98,14 @@ var Game =
 			this.comboTimer = null;
 		}
 
-		this.numColors = Math.min(
-			CONFIG.STARTING_COLORS + Math.floor((level - 1) / 3),
-			CONFIG.MAX_COLORS
-		);
+		// В бесконечном режиме numColors уже задан в nextEndlessLevel()
+		if (!this.isEndlessMode)
+		{
+			this.numColors = Math.min(
+				CONFIG.STARTING_COLORS + Math.floor((level - 1) / 3),
+				CONFIG.MAX_COLORS
+			);
+		}
 
 		var rng = this._rng || Math.random;
 		this._buildTubes(rng);
