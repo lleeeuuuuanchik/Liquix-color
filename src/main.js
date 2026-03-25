@@ -25,14 +25,23 @@
 
 	// === UI ===
 
+	function isSpecialMode()
+	{
+		return Game.isEndlessMode || Game.isDailyMode || Game.isTimedMode;
+	}
+
 	function updateUI()
 	{
 		var levelEl = document.getElementById('level-value');
 		var movesEl = document.getElementById('moves-value');
 		var undoBadge = document.getElementById('undo-badge');
+		var topbarCenter = document.getElementById('topbar-center');
 		if (levelEl) levelEl.textContent = Game.level;
 		if (movesEl) movesEl.textContent = Game.moveCount;
 		if (undoBadge) undoBadge.textContent = Game.undosLeft;
+
+		// Скрываем «Уровень» в спецрежимах
+		if (topbarCenter) topbarCenter.style.display = isSpecialMode() ? 'none' : '';
 
 		// Сбрасываем freeze-select визуал
 		if (!freezeSelectMode)
@@ -539,6 +548,10 @@
 			Progress.addCoins(CONFIG.DAILY_BONUS_COINS);
 			Progress.incStat('dailyWins');
 		}
+
+		// В спецрежимах скрываем «Следующий уровень», оставляем только «Меню»
+		var btnNext = document.getElementById('btn-next-level');
+		if (btnNext) btnNext.style.display = isSpecialMode() ? 'none' : '';
 
 		if (levelsCompleted % CONFIG.INTERSTITIAL_EVERY === 0)
 		{
