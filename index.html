@@ -11,91 +11,95 @@
 	<script src="https://yandex.ru/games/sdk/v2"></script>
 </head>
 <body oncontextmenu="return false">
+	<!-- ===== ПРЕЛОАДЕР ===== -->
+	<div id="preloader">
+		<div class="preloader__logo">🧪</div>
+		<div class="preloader__title" data-i18n="game.title">Разлей-ка цвет</div>
+		<div class="preloader__spinner"></div>
+	</div>
+
 	<div class="g-app" id="app">
 
 		<!-- ===== ГЛАВНОЕ МЕНЮ ===== -->
 		<div class="screen is-active" id="screen-menu">
-			<!-- Декоративные blob-фигуры -->
-			<div class="menu-blob menu-blob--1"></div>
-			<div class="menu-blob menu-blob--2"></div>
-			<div class="menu-blob menu-blob--3"></div>
-			<div class="menu-blob menu-blob--4"></div>
 
-			<div class="menu">
-				<!-- Логотип -->
-				<div class="menu__logo">
-					<div class="menu__logo-icon">🧪</div>
-					<h1 class="menu__title" data-i18n="game.title">Разлей-ка цвет</h1>
+			<!-- Верхняя полоса: лого + статы + управление -->
+			<div class="menu-topbar">
+				<div class="menu-topbar__logo">
+					<span class="menu-topbar__logo-icon">🧪</span>
+					<h1 class="menu-topbar__title" data-i18n="game.title">Разлей-ка цвет</h1>
 				</div>
-
-				<!-- Статы в чипах -->
-				<div class="menu__chips">
-					<div class="menu__chip">
-						<span class="menu__chip-icon" data-i18n="level.label">Уровень</span>
-						<span class="menu__chip-value" id="menu-level-num">1</span>
+				<div class="menu-topbar__stats">
+					<div class="menu-topbar__chip">
+						<span class="menu-topbar__chip-label" data-i18n="level.label">Уровень</span>
+						<span class="menu-topbar__chip-value" id="menu-level-num">1</span>
 					</div>
-					<div class="menu__chip menu__chip--stars">
-						<span class="menu__chip-icon">⭐</span>
-						<span class="menu__chip-value" id="menu-total-stars">0</span>
+					<div class="menu-topbar__chip menu-topbar__chip--stars">
+						<span class="menu-topbar__chip-label">⭐</span>
+						<span class="menu-topbar__chip-value" id="menu-total-stars">0</span>
 					</div>
-					<div class="menu__chip menu__chip--coins">
-						<span class="menu__chip-icon">🪙</span>
-						<span class="menu__chip-value" id="menu-coins">0</span>
+					<div class="menu-topbar__chip menu-topbar__chip--coins">
+						<span class="menu-topbar__chip-label">🪙</span>
+						<span class="menu-topbar__chip-value" id="menu-coins">0</span>
+					</div>
+					<div class="menu-topbar__progress-wrap">
+						<div class="menu-topbar__progress-bar">
+							<div class="menu-topbar__progress-fill" id="menu-progress-fill"></div>
+						</div>
 					</div>
 				</div>
-
-				<!-- Прогресс-бар -->
-				<div class="menu__progress-bar">
-					<div class="menu__progress-fill" id="menu-progress-fill"></div>
+				<div class="menu-topbar__controls">
+					<button class="menu-ctrl-btn" id="btn-sound-menu" aria-label="Звук">🔊</button>
+					<button class="menu-ctrl-btn menu-ctrl-btn--lang" id="btn-lang" aria-label="Язык">RU</button>
 				</div>
+			</div>
 
-				<!-- Главная кнопка -->
-				<button class="btn-play-big" id="btn-play">
-					<span class="btn-play-big__ring"></span>
-					<span class="btn-play-big__text" data-i18n="btn.play">Играть</span>
+			<!-- Основная область: hero-карточка + режимы -->
+			<div class="menu-body">
+				<!-- Hero-карточка ИГРАТЬ -->
+				<button class="menu-hero" id="btn-play">
+					<span class="menu-hero__glow"></span>
+					<span class="menu-hero__icon">🧪</span>
+					<span class="menu-hero__label" data-i18n="btn.play">Играть</span>
 				</button>
 
-				<!-- Карточки режимов — 3 в ряд -->
-				<div class="menu__modes">
-					<button class="mode-card mode-card--accent" id="btn-endless">
-						<span class="mode-card__icon">♾️</span>
-						<span class="mode-card__label" data-i18n="btn.endless">Бесконечный</span>
+				<!-- Карточки режимов — вертикально, справа -->
+				<div class="menu-modes">
+					<button class="menu-mode menu-mode--accent" id="btn-endless">
+						<span class="menu-mode__icon">♾️</span>
+						<span class="menu-mode__label" data-i18n="btn.endless">Бесконечный</span>
 					</button>
-					<button class="mode-card mode-card--pink" id="btn-daily">
-						<span class="mode-card__icon">📅</span>
-						<span class="mode-card__label" data-i18n="btn.daily">Испытание дня</span>
+					<button class="menu-mode menu-mode--pink" id="btn-daily">
+						<span class="menu-mode__icon">📅</span>
+						<span class="menu-mode__label" data-i18n="btn.daily">Испытание дня</span>
 					</button>
-					<button class="mode-card mode-card--teal" id="btn-timed">
-						<span class="mode-card__icon">⏱️</span>
-						<span class="mode-card__label" data-i18n="btn.timed">На время</span>
-					</button>
-				</div>
-
-				<!-- Нижняя навигация -->
-				<div class="menu__nav">
-					<button class="menu__nav-btn" id="btn-levels">
-						<span class="menu__nav-icon">📋</span>
-						<span class="menu__nav-label" data-i18n="btn.levels">Уровни</span>
-					</button>
-					<button class="menu__nav-btn" id="btn-shop">
-						<span class="menu__nav-icon">🛒</span>
-						<span class="menu__nav-label" data-i18n="btn.shop">Магазин</span>
-					</button>
-					<button class="menu__nav-btn" id="btn-achievements">
-						<span class="menu__nav-icon">🏆</span>
-						<span class="menu__nav-label" data-i18n="achieve.title">Медали</span>
-					</button>
-					<button class="menu__nav-btn" id="btn-how-to-play">
-						<span class="menu__nav-icon">❓</span>
-						<span class="menu__nav-label" data-i18n="btn.how-to-play">Правила</span>
+					<button class="menu-mode menu-mode--teal" id="btn-timed">
+						<span class="menu-mode__icon">⏱️</span>
+						<span class="menu-mode__label" data-i18n="btn.timed">На время</span>
 					</button>
 				</div>
 			</div>
 
-			<!-- Смена языка -->
-			<button class="btn-corner btn-corner--br" id="btn-lang" aria-label="Язык">RU</button>
-			<!-- Звук в углу -->
-			<button class="btn-corner btn-corner--bl" id="btn-sound-menu" aria-label="Звук">&#128266;</button>
+			<!-- Нижняя полоса: навигация -->
+			<div class="menu-nav">
+				<button class="menu-nav__btn" id="btn-levels">
+					<span class="menu-nav__icon">📋</span>
+					<span class="menu-nav__label" data-i18n="btn.levels">Уровни</span>
+				</button>
+				<button class="menu-nav__btn" id="btn-shop">
+					<span class="menu-nav__icon">🛒</span>
+					<span class="menu-nav__label" data-i18n="btn.shop">Магазин</span>
+				</button>
+				<button class="menu-nav__btn" id="btn-achievements">
+					<span class="menu-nav__icon">🏆</span>
+					<span class="menu-nav__label" data-i18n="achieve.title">Медали</span>
+				</button>
+				<button class="menu-nav__btn" id="btn-how-to-play">
+					<span class="menu-nav__icon">❓</span>
+					<span class="menu-nav__label" data-i18n="btn.how-to-play">Правила</span>
+				</button>
+			</div>
+
 		</div>
 
 		<!-- ===== МАГАЗИН ===== -->
@@ -174,50 +178,65 @@
 
 		<!-- ===== ИГРОВОЙ ЭКРАН ===== -->
 		<div class="screen" id="screen-game">
-			<!-- Тонкий top-bar -->
+			<!-- Топбар -->
 			<div class="topbar">
 				<button class="topbar__btn" id="btn-pause" aria-label="Пауза">
 					<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="4" y="3" width="4" height="14" rx="1" fill="currentColor"/><rect x="12" y="3" width="4" height="14" rx="1" fill="currentColor"/></svg>
 				</button>
 				<div class="topbar__center" id="topbar-center">
-					<span class="topbar__level" data-i18n="level.label">Уровень</span>
-					<span class="topbar__level-num" id="level-value">1</span>
+					<div class="topbar__level-chip">
+						<span class="topbar__level" data-i18n="level.label">Уровень</span>
+						<span class="topbar__level-num" id="level-value">1</span>
+					</div>
 				</div>
 				<div class="topbar__timer" id="topbar-timer" style="display:none">
 					<span class="topbar__timer-icon">⏱️</span>
 					<span class="topbar__timer-value" id="timer-value">90</span>
 				</div>
-				<div class="topbar__right">
+				<div class="topbar__moves-chip">
 					<span class="topbar__moves" id="moves-value">0</span>
 					<span class="topbar__moves-label" data-i18n="moves.label">ходов</span>
 				</div>
 			</div>
 
-			<!-- Canvas без рамки -->
+			<!-- Canvas -->
 			<canvas class="game__canvas" id="game-canvas"></canvas>
 
-			<!-- Док-бар с круглыми кнопками -->
+			<!-- Докбар -->
 			<div class="dock">
-				<button class="dock__btn" id="btn-undo" aria-label="Отменить">
+				<!-- Группа 1: Отмена -->
+				<button class="dock__btn dock__btn--undo" id="btn-undo" aria-label="Отменить">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M7 11H3l4-4M3 11l4 4M3 11h12a4 4 0 110 8H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
 					<span class="dock__badge" id="undo-badge">3</span>
 				</button>
+
+				<div class="dock__sep"></div>
+
+				<!-- Группа 2: За рекламу -->
 				<button class="dock__btn dock__btn--ad" id="btn-hint" aria-label="Подсказка">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 1a7 7 0 00-3 13.33V17a1 1 0 001 1h4a1 1 0 001-1v-2.67A7 7 0 0011 1z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="9" y1="21" x2="13" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+					<span class="dock__ad-tag">📺</span>
 				</button>
 				<button class="dock__btn dock__btn--ad" id="btn-extra-tube" aria-label="Доп. пробирка">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="7" y="2" width="8" height="18" rx="4" stroke="currentColor" stroke-width="2"/><line x1="11" y1="6" x2="11" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="8" x2="13" y2="8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+					<span class="dock__ad-tag">📺</span>
 				</button>
 				<button class="dock__btn dock__btn--ad" id="btn-bomb" aria-label="Бомба">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="10" cy="13" r="7" stroke="currentColor" stroke-width="2"/><path d="M13 6l2-3M14 3l2 1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+					<span class="dock__ad-tag">📺</span>
 				</button>
 				<button class="dock__btn dock__btn--ad" id="btn-magnet" aria-label="Магнит">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M5 3v8a6 6 0 0012 0V3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="3" y="2" width="4" height="5" rx="1" fill="currentColor"/><rect x="15" y="2" width="4" height="5" rx="1" fill="currentColor"/></svg>
+					<span class="dock__ad-tag">📺</span>
 				</button>
-				<button class="dock__btn" id="btn-freeze" aria-label="Заморозка">
+
+				<div class="dock__sep"></div>
+
+				<!-- Группа 3: Утилиты -->
+				<button class="dock__btn dock__btn--util" id="btn-freeze" aria-label="Заморозка">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><line x1="11" y1="2" x2="11" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="2" y1="11" x2="20" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="4.5" y1="4.5" x2="17.5" y2="17.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="17.5" y1="4.5" x2="4.5" y2="17.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
 				</button>
-				<button class="dock__btn" id="btn-sound" aria-label="Звук">
+				<button class="dock__btn dock__btn--util" id="btn-sound" aria-label="Звук">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 3L6 8H2v6h4l5 5V3z" fill="currentColor"/><path d="M15.5 8.5a4 4 0 010 5M18 6a8 8 0 010 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
 				</button>
 			</div>
@@ -264,6 +283,17 @@
 			</div>
 		</div>
 
+	</div>
+
+	<!-- ===== ПОПАП ПОДТВЕРЖДЕНИЯ РЕКЛАМЫ ЗА НАГРАДУ ===== -->
+	<div class="rv-overlay" id="rv-confirm" style="display:none">
+		<div class="rv-modal">
+			<div class="rv-modal__icon" id="rv-icon">📺</div>
+			<div class="rv-modal__title" data-i18n="rv.title">Реклама за награду</div>
+			<div class="rv-modal__desc" id="rv-desc"></div>
+			<button class="btn btn--primary" id="rv-btn-watch" data-i18n="rv.watch">📺 Смотреть рекламу</button>
+			<button class="btn btn--secondary" id="rv-btn-cancel" data-i18n="rv.cancel">Отмена</button>
+		</div>
 	</div>
 
 	<script src="src/config.js"></script>

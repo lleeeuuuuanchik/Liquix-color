@@ -90,6 +90,7 @@ var Game =
 		this.magnetMode = false;
 		this.frozenTubes = {};
 		this.hasRainbow = false;
+		this.rainbowOriginalColor = -1;
 		this._usedHintThisLevel = false;
 
 		if (this.comboTimer)
@@ -158,6 +159,7 @@ var Game =
 			if (nonEmpty.length > 0)
 			{
 				var pick = nonEmpty[Math.floor(rng() * nonEmpty.length)];
+				this.rainbowOriginalColor = tubes[pick.t][pick.s];
 				tubes[pick.t][pick.s] = CONFIG.RAINBOW_COLOR_IDX;
 				this.hasRainbow = true;
 			}
@@ -173,11 +175,25 @@ var Game =
 			var t = tubes[i];
 			if (t.length === 0) continue;
 			if (t.length !== CONFIG.TUBE_CAPACITY) return false;
-			for (var j = 1; j < t.length; j++)
+
+			// Находим первый реальный цвет (не радужный)
+			var realColor = -1;
+			for (var j = 0; j < t.length; j++)
 			{
-				// Радужный сегмент, конвертированный в цвет, уже равен t[0]
-				// Неконвертированный радужный считаем совместимым
-				if (t[j] !== t[0] && t[j] !== CONFIG.RAINBOW_COLOR_IDX && t[0] !== CONFIG.RAINBOW_COLOR_IDX)
+				if (t[j] !== CONFIG.RAINBOW_COLOR_IDX)
+				{
+					realColor = t[j];
+					break;
+				}
+			}
+
+			// Пробирка целиком из радужных — ок
+			if (realColor === -1) continue;
+
+			// Все не-радужные сегменты должны совпадать с realColor
+			for (var k = 0; k < t.length; k++)
+			{
+				if (t[k] !== CONFIG.RAINBOW_COLOR_IDX && t[k] !== realColor)
 					return false;
 			}
 		}
@@ -377,7 +393,12 @@ var Game =
 
 		if (move.type === 'bomb')
 		{
-			this.tubes[move.tubeIdx].push(move.color);
+			// Восстанавливаем все сегменты в исходные позиции (в обратном порядке удаления)
+			for (var ri = move.removed.length - 1; ri >= 0; ri--)
+			{
+				var r = move.removed[ri];
+				this.tubes[r.tube].splice(r.idx, 0, r.color);
+			}
 			this.bombsLeft++;
 		}
 		else
@@ -408,14 +429,37 @@ var Game =
 
 	useBomb: function (tubeIdx)
 	{
-		if (this.tubes[tubeIdx].length === 0) return false;
+		var tube = this.tubes[tubeIdx];
+		if (tube.length === 0) return false;
 
-		var color = this.tubes[tubeIdx].pop();
+		var targetColor = tube[tube.length - 1];
+		if (targetColor === CONFIG.RAINBOW_COLOR_IDX) return false;
+
+		// Удаляем все сегменты этого цвета со всей доски (ровно TUBE_CAPACITY штук),
+		// чтобы сохранить сбалансированность и проходимость уровня.
+		// Если радуга была исходно этого цвета — удаляем и её.
+		var removed = [];
+		for (var i = 0; i < this.tubes.length; i++)
+		{
+			for (var j = this.tubes[i].length - 1; j >= 0; j--)
+			{
+				var seg = this.tubes[i][j];
+				var isTarget = seg === targetColor;
+				var isOrphanRainbow = seg === CONFIG.RAINBOW_COLOR_IDX &&
+					this.rainbowOriginalColor === targetColor;
+
+				if (isTarget || isOrphanRainbow)
+				{
+					removed.push({ tube: i, idx: j, color: seg });
+					this.tubes[i].splice(j, 1);
+				}
+			}
+		}
 
 		this.moveHistory.push({
 			type: 'bomb',
-			tubeIdx: tubeIdx,
-			color: color,
+			color: targetColor,
+			removed: removed,
 		});
 
 		this.bombMode = false;

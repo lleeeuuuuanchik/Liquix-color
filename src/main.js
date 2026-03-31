@@ -1,7 +1,5 @@
 (function ()
 {
-	var levelsCompleted = 0;
-
 	// === Экраны ===
 
 	function showScreen(id)
@@ -21,6 +19,26 @@
 				target.removeEventListener('animationend', handler);
 			}, { once: true });
 		}
+	}
+
+	// Показать оверлей поверх игрового экрана (не скрывает screen-game)
+	function showGameOverlay(id)
+	{
+		var overlay = document.getElementById(id);
+		if (!overlay) return;
+		overlay.classList.add('is-active');
+		overlay.classList.add('screen--entering');
+		overlay.addEventListener('animationend', function handler()
+		{
+			overlay.classList.remove('screen--entering');
+			overlay.removeEventListener('animationend', handler);
+		}, { once: true });
+	}
+
+	function hideGameOverlay(id)
+	{
+		var overlay = document.getElementById(id);
+		if (overlay) overlay.classList.remove('is-active');
 	}
 
 	// === UI ===
@@ -158,6 +176,29 @@
 	{
 		var container = document.getElementById('confetti-container');
 		if (container) container.innerHTML = '';
+	}
+
+	// === Попап подтверждения рекламы за награду ===
+
+	function showRewardedConfirm(icon, descKey, onConfirm)
+	{
+		var overlay = document.getElementById('rv-confirm');
+		if (!overlay) { onConfirm(); return; }
+
+		var iconEl = document.getElementById('rv-icon');
+		var descEl = document.getElementById('rv-desc');
+		if (iconEl) iconEl.textContent = icon;
+		if (descEl) descEl.textContent = i18n.t(descKey);
+
+		overlay.style.display = 'flex';
+
+		var btnWatch = document.getElementById('rv-btn-watch');
+		var btnCancel = document.getElementById('rv-btn-cancel');
+
+		function close() { overlay.style.display = 'none'; }
+
+		if (btnWatch) btnWatch.onclick = function () { close(); onConfirm(); };
+		if (btnCancel) btnCancel.onclick = close;
 	}
 
 	// === Тосты ===
@@ -522,7 +563,6 @@
 	function onLevelComplete()
 	{
 		YandexSDK.gameplayStop();
-		levelsCompleted++;
 
 		var special = isSpecialMode();
 		var stars = special ? 0 : Game.getStars();
@@ -588,19 +628,8 @@
 		var btnNext = document.getElementById('btn-next-level');
 		if (btnNext) btnNext.style.display = special ? 'none' : '';
 
-		if (levelsCompleted % CONFIG.INTERSTITIAL_EVERY === 0)
-		{
-			YandexSDK.showInterstitial(function ()
-			{
-				spawnConfetti();
-				showScreen('screen-level-complete');
-			});
-		}
-		else
-		{
-			spawnConfetti();
-			showScreen('screen-level-complete');
-		}
+		spawnConfetti();
+		showScreen('screen-level-complete');
 	}
 
 	// === Кнопки ===
@@ -681,26 +710,32 @@
 		{
 			clearConfetti();
 
-			if (Game.isEndlessMode)
-				Game.nextEndlessLevel();
-			else if (Game.isDailyMode)
+			if (Game.isDailyMode)
 			{
 				updateMenuBadge();
 				showScreen('screen-menu');
 				return;
 			}
-			else
-				Game.nextLevel();
 
-			Render.calcLayout();
-			Render.drawAll();
-			updateUI();
+			function goNextLevel()
+			{
+				if (Game.isEndlessMode)
+					Game.nextEndlessLevel();
+				else
+					Game.nextLevel();
 
-			if (Game.isTimedMode)
-				updateTimerDisplay(Game.getTimedRemaining());
+				Render.calcLayout();
+				Render.drawAll();
+				updateUI();
 
-			showScreen('screen-game');
-			YandexSDK.gameplayStart();
+				if (Game.isTimedMode)
+					updateTimerDisplay(Game.getTimedRemaining());
+
+				showScreen('screen-game');
+				YandexSDK.gameplayStart();
+			}
+
+			goNextLevel();
 		});
 
 		// Пауза
@@ -709,19 +744,20 @@
 			if (!Game.isGameOver && !Game.isPaused && !Game.isAnimating)
 			{
 				Game.pause();
-				showScreen('screen-pause');
+				showGameOverlay('screen-pause');
 			}
 		});
 
 		bindButton('btn-resume', function ()
 		{
 			Game.resume();
-			showScreen('screen-game');
+			hideGameOverlay('screen-pause');
 		});
 
 		bindButton('btn-pause-menu', function ()
 		{
 			Game.isPaused = false;
+			hideGameOverlay('screen-pause');
 			YandexSDK.gameplayStop();
 			updateMenuBadge();
 			showScreen('screen-menu');
@@ -734,7 +770,7 @@
 			Render.calcLayout();
 			Render.drawAll();
 			updateUI();
-			showScreen('screen-game');
+			hideGameOverlay('screen-pause');
 			YandexSDK.gameplayStart();
 		});
 
@@ -763,18 +799,21 @@
 			}
 			else
 			{
-				YandexSDK.showRewarded(
-					function ()
-					{
-						Game.undosLeft += CONFIG.FREE_UNDOS;
-						if (Game.undo()) { Render.drawAll(); updateUI(); }
-					},
-					function ()
-					{
-						Game.undosLeft += CONFIG.FREE_UNDOS;
-						updateUI();
-					}
-				);
+				showRewardedConfirm('↩️', 'rv.desc.undo', function ()
+				{
+					YandexSDK.showRewarded(
+						function ()
+						{
+							Game.undosLeft += CONFIG.FREE_UNDOS;
+							if (Game.undo()) { Render.drawAll(); updateUI(); }
+						},
+						function ()
+						{
+							Game.undosLeft += CONFIG.FREE_UNDOS;
+							updateUI();
+						}
+					);
+				});
 			}
 		});
 
@@ -799,10 +838,13 @@
 				useHint();
 			else
 			{
-				YandexSDK.showRewarded(
-					function () { Game.hintsLeft++; useHint(); },
-					function () { Game.hintsLeft++; useHint(); }
-				);
+				showRewardedConfirm('💡', 'rv.desc.hint', function ()
+				{
+					YandexSDK.showRewarded(
+						function () { Game.hintsLeft++; useHint(); },
+						function () { Game.hintsLeft++; useHint(); }
+					);
+				});
 			}
 		});
 
@@ -811,20 +853,23 @@
 		{
 			if (Game.isAnimating || Game.extraTubeUsed) return;
 
-			YandexSDK.showRewarded(
-				function ()
-				{
-					Game.addExtraTube();
-					Render.calcLayout();
-					Render.drawAll();
-				},
-				function ()
-				{
-					Game.addExtraTube();
-					Render.calcLayout();
-					Render.drawAll();
-				}
-			);
+			showRewardedConfirm('🧪', 'rv.desc.extra-tube', function ()
+			{
+				YandexSDK.showRewarded(
+					function ()
+					{
+						Game.addExtraTube();
+						Render.calcLayout();
+						Render.drawAll();
+					},
+					function ()
+					{
+						Game.addExtraTube();
+						Render.calcLayout();
+						Render.drawAll();
+					}
+				);
+			});
 		});
 
 		// Бомба (dock)
@@ -839,7 +884,10 @@
 				Render.drawAll();
 			}
 
-			YandexSDK.showRewarded(activateBomb, activateBomb);
+			showRewardedConfirm('💣', 'rv.desc.bomb', function ()
+			{
+				YandexSDK.showRewarded(activateBomb, activateBomb);
+			});
 		});
 
 		// Магнит (dock)
@@ -853,7 +901,10 @@
 				Render.drawAll();
 			}
 
-			YandexSDK.showRewarded(activateMagnet, activateMagnet);
+			showRewardedConfirm('🧲', 'rv.desc.magnet', function ()
+			{
+				YandexSDK.showRewarded(activateMagnet, activateMagnet);
+			});
 		});
 
 		// Заморозка (dock)
@@ -958,7 +1009,7 @@
 				if (!Game.isGameOver && !Game.isPaused && !Game.isAnimating)
 				{
 					Game.pause();
-					showScreen('screen-pause');
+					showGameOverlay('screen-pause');
 				}
 				return;
 			}
@@ -966,7 +1017,7 @@
 			if (pauseScreen && pauseScreen.classList.contains('is-active'))
 			{
 				Game.resume();
-				showScreen('screen-game');
+				hideGameOverlay('screen-pause');
 			}
 		});
 	}
@@ -989,15 +1040,21 @@
 	{
 		Progress.load();
 
+		// Определяем язык по браузеру до рендера UI — избегаем мигания языка
+		i18n.detectFromBrowser();
+
 		// Подписка на достижения
 		Progress.onAchievementUnlocked = function (achievement)
 		{
 			showAchievementToast(achievement);
 		};
 
+		// SDK уточнит язык асинхронно — обновим UI когда загрузится
 		YandexSDK.init(function ()
 		{
 			i18n.apply();
+			updateMenuBadge();
+			updateLangButton();
 			YandexSDK.notifyReady();
 		});
 
@@ -1005,9 +1062,20 @@
 		updateMenuBadge();
 		updateSoundIcons();
 		updateLangButton();
-		showScreen('screen-menu');
 		bindButtons();
 		bindPlatformEvents();
+
+		var preloader = document.getElementById('preloader');
+		if (preloader)
+		{
+			preloader.classList.add('is-hiding');
+			preloader.addEventListener('animationend', function ()
+			{
+				preloader.style.display = 'none';
+			}, { once: true });
+		}
+
+		showScreen('screen-menu');
 
 		// Проверяем достижения при старте (если уже набраны ранее)
 		Progress.checkAllAchievements();

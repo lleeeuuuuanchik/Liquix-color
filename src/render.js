@@ -37,12 +37,48 @@ var Render =
 		this._selectionTarget = {};
 		this.calcLayout();
 		this._startIdleLoop();
+		this._bindResize();
+	},
+
+	_bindResize: function ()
+	{
+		if (this._resizeObserver)
+			this._resizeObserver.disconnect();
+
+		if (typeof ResizeObserver === 'undefined') return;
+
+		var self = this;
+		this._resizeObserver = new ResizeObserver(function ()
+		{
+			if (!Game.isAnimating)
+			{
+				self.calcLayout();
+				self.drawAll();
+			}
+		});
+		this._resizeObserver.observe(this.canvas);
 	},
 
 	calcLayout: function ()
 	{
 		var total = Game.tubes.length;
 		if (total === 0) return;
+
+		// Сбрасываем inline-стиль — пусть CSS (grid 1fr) определит размер ячейки
+		this.canvas.style.width = '';
+		this.canvas.style.height = '';
+
+		// offsetWidth/Height вызывают синхронный reflow и возвращают CSS-размер.
+		// Если ноль — экран ещё скрыт; откладываем через RAF.
+		var availW = this.canvas.offsetWidth;
+		var availH = this.canvas.offsetHeight;
+
+		if (availW === 0 || availH === 0)
+		{
+			var self = this;
+			requestAnimationFrame(function () { self.calcLayout(); self.drawAll(); });
+			return;
+		}
 
 		var maxPerRow = 7;
 		var rows, perRow;
@@ -58,17 +94,26 @@ var Render =
 			perRow = Math.ceil(total / 2);
 		}
 
-		var rowWidth = perRow * this.tubeW + (perRow - 1) * this.tubeGap;
-		var rowHeight = this.tubeH;
-		var rowGapY = 24;
+		var pad      = this.tubePadding;
+		var topH     = 20;   // место для подписи над трубками
+		var rowGapY  = 20;
+		var aspect   = CONFIG.TUBE_HEIGHT / CONFIG.TUBE_WIDTH;
 
-		var canvasW = rowWidth + this.tubePadding * 2;
-		var canvasH = rows * rowHeight + (rows - 1) * rowGapY + this.tubePadding * 2 + 20;
+		// Вписываем трубки в availW × availH с сохранением пропорции
+		var maxTubeW = Math.floor((availW - pad * 2 - (perRow - 1) * this.tubeGap) / perRow);
+		var maxTubeH = Math.floor((availH - pad * 2 - topH - (rows - 1) * rowGapY) / rows);
 
-		this.canvas.style.width = canvasW + 'px';
-		this.canvas.style.height = canvasH + 'px';
-		this.canvas.width = canvasW * this.dpr;
-		this.canvas.height = canvasH * this.dpr;
+		var tubeW = Math.min(maxTubeW, Math.floor(maxTubeH / aspect));
+		var tubeH = Math.round(tubeW * aspect);
+
+		tubeW = Math.max(28, tubeW);
+		tubeH = Math.max(90, tubeH);
+
+		this.tubeW = tubeW;
+		this.tubeH = tubeH;
+
+		this.canvas.width  = availW * this.dpr;
+		this.canvas.height = availH * this.dpr;
 		this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
 
 		this.tubePositions = [];
@@ -78,11 +123,11 @@ var Render =
 			var row = rows === 1 ? 0 : Math.floor(i / perRow);
 			var col = rows === 1 ? i : i % perRow;
 			var itemsInRow = row === 0 ? perRow : total - perRow;
-			var rw = itemsInRow * this.tubeW + (itemsInRow - 1) * this.tubeGap;
-			var offsetX = (canvasW - rw) / 2;
+			var rw = itemsInRow * tubeW + (itemsInRow - 1) * this.tubeGap;
+			var offsetX = (availW - rw) / 2;
 
-			var x = offsetX + col * (this.tubeW + this.tubeGap);
-			var y = this.tubePadding + 20 + row * (rowHeight + rowGapY);
+			var x = offsetX + col * (tubeW + this.tubeGap);
+			var y = pad + topH + row * (tubeH + rowGapY);
 
 			this.tubePositions.push({ x: x, y: y, index: i });
 		}
